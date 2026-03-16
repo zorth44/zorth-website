@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef } from "react"
 import { useTheme } from "next-themes"
 
 interface GiscusCommentsProps {
@@ -18,17 +18,12 @@ export function GiscusComments({
 }: GiscusCommentsProps) {
   const { resolvedTheme } = useTheme()
   const ref = useRef<HTMLDivElement>(null)
-  const [mounted, setMounted] = useState(false)
 
   // 主题映射
   const theme = resolvedTheme === "dark" ? "dark" : "light"
 
   useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  useEffect(() => {
-    if (!mounted || !ref.current) return
+    if (!ref.current) return
 
     // 清空容器
     ref.current.innerHTML = ""
@@ -57,21 +52,12 @@ export function GiscusComments({
         ref.current.innerHTML = ""
       }
     }
-  }, [mounted, repo, repoId, category, categoryId, theme])
-
-  if (!mounted) {
-    return (
-      <div className="mt-12 pt-8 border-t">
-        <h3 className="text-lg font-semibold mb-4">评论</h3>
-        <div className="h-32 bg-muted/50 rounded-lg animate-pulse" />
-      </div>
-    )
-  }
+  }, [repo, repoId, category, categoryId, theme])
 
   return (
     <div className="mt-12 pt-8 border-t">
       <h3 className="text-lg font-semibold mb-4">评论</h3>
-      <div ref={ref} />
+      <div ref={ref} className="giscus" />
     </div>
   )
 }

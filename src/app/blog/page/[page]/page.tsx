@@ -1,34 +1,63 @@
 import { allPosts, type Post } from "contentlayer/generated"
 import { Metadata } from "next"
+import { notFound } from "next/navigation"
 import { Badge } from "@/components/ui/badge"
-import { BlogList } from "./blog-list"
+import { BlogList } from "../../blog-list"
 import { Pagination } from "@/components/pagination"
 
-export const metadata: Metadata = {
-  title: "博客",
-  description: "探索技术文章、生活感悟和更多有趣的内容",
-  openGraph: {
-    title: "博客 | Zorth",
-    description: "探索技术文章、生活感悟和更多有趣的内容",
-  },
+interface BlogPageProps {
+  params: Promise<{ page: string }>
 }
 
 const POSTS_PER_PAGE = 9
 
-export default function BlogPage() {
-  // 获取已发布的文章，按日期降序排列
+export async function generateMetadata({ params }: BlogPageProps): Promise<Metadata> {
+  const { page } = await params
+  return {
+    title: `博客 - 第 ${page} 页`,
+    description: "探索技术文章、生活感悟和更多有趣的内容",
+  }
+}
+
+export async function generateStaticParams() {
+  const allPublishedPosts = allPosts.filter((post: Post) => post.published)
+  const totalPages = Math.ceil(allPublishedPosts.length / POSTS_PER_PAGE)
+
+  // 生成第 2 页及以后的静态参数（第 1 页是 /blog）
+  return Array.from({ length: totalPages - 1 }, (_, i) => ({
+    page: String(i + 2),
+  }))
+}
+
+export default async function BlogPageNumber({ params }: BlogPageProps) {
+  const { page } = await params
+  const pageNumber = parseInt(page, 10)
+
+  // 获取已发布的文章
   const allPublishedPosts = allPosts
     .filter((post: Post) => post.published)
     .sort((a: Post, b: Post) => new Date(b.date).getTime() - new Date(a.date).getTime())
+
+  const totalPages = Math.ceil(allPublishedPosts.length / POSTS_PER_PAGE)
+
+  // 验证页码
+  if (
+    isNaN(pageNumber) ||
+    pageNumber < 2 ||
+    pageNumber > totalPages ||
+    allPublishedPosts.length === 0
+  ) {
+    notFound()
+  }
+
+  // 计算当前页的文章
+  const startIndex = (pageNumber - 1) * POSTS_PER_PAGE
+  const posts = allPublishedPosts.slice(startIndex, startIndex + POSTS_PER_PAGE)
 
   // 提取所有标签
   const allTags = Array.from(
     new Set(allPublishedPosts.flatMap((post: Post) => post.tags || []))
   ).sort()
-
-  // 第一页的文章
-  const posts = allPublishedPosts.slice(0, POSTS_PER_PAGE)
-  const totalPages = Math.ceil(allPublishedPosts.length / POSTS_PER_PAGE)
 
   return (
     <div className="container px-4 md:px-6 py-8 md:py-12">
@@ -50,6 +79,9 @@ export default function BlogPage() {
             {allTags.length} 个标签
           </Badge>
         )}
+        <Badge variant="outline" className="px-3 py-1">
+          第 {pageNumber} / {totalPages} 页
+        </Badge>
       </div>
 
       {/* Tags */}
@@ -68,21 +100,8 @@ export default function BlogPage() {
       )}
 
       {/* Posts Grid */}
-      {posts.length === 0 ? (
-        <div className="text-center py-12">
-          <p className="text-muted-foreground text-lg mb-2">暂无文章</p>
-          <p className="text-sm text-muted-foreground">
-            稍后再来看看吧
-          </p>
-        </div>
-      ) : (
-        <>
-          <BlogList posts={posts} />
-          {totalPages > 1 && (
-            <Pagination currentPage={1} totalPages={totalPages} />
-          )}
-        </>
-      )}
+      <BlogList posts={posts} />
+      <Pagination currentPage={pageNumber} totalPages={totalPages} />
     </div>
   )
 }
