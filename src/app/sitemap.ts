@@ -1,6 +1,8 @@
 import { MetadataRoute } from "next"
 import { allPosts, Post } from "contentlayer/generated"
 
+export const dynamic = "force-static"
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://zorth-website.com"
 

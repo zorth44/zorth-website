@@ -2,8 +2,6 @@
 
 一个基于 Next.js 15 构建的现代化静态个人博客，支持暗黑模式、Markdown 渲染、代码高亮和 Giscus 评论系统。
 
-**在线预览**: https://zorth-website.com
-
 ## 技术栈
 
 - **框架**: [Next.js 15](https://nextjs.org/) (App Router + Static Export)
@@ -112,16 +110,18 @@ my-app/
 └── package.json
 ```
 
-## 写作指南
+## 新增 / 更新博客
 
-在 `content/posts/` 目录下创建 `.mdx` 文件：
+### 1. 创建文章文件
+
+在 `content/posts/` 目录下新建 `.mdx` 文件，文件名即为文章标识：
 
 ```mdx
 ---
 title: "文章标题"
 slug: "article-slug"
 excerpt: "文章摘要，会显示在列表页"
-date: "2026-03-16"
+date: "2026-03-23"
 tags: ["nextjs", "react", "blog"]
 author: "Zorth"
 published: true
@@ -151,29 +151,32 @@ function hello(name: string): string {
 | 响应式 | ✅ |
 ```
 
-## 部署
+> 将 `published` 设为 `false` 可以保存草稿而不对外显示。
 
-### Vercel（推荐）
-
-1. 在 [Vercel](https://vercel.com/) 创建新项目
-2. 导入 GitHub 仓库
-3. 无需额外配置，直接部署
-
-### GitHub Pages
+### 2. 重新构建
 
 ```bash
-# 构建并推送到 gh-pages 分支
 npm run build
-# 将 dist/ 目录内容部署到 GitHub Pages
 ```
 
-### 其他静态托管
+构建输出在 `out/` 目录。
 
-构建后的 `dist/` 目录可部署到：
-- [Cloudflare Pages](https://pages.cloudflare.com/)
-- [Netlify](https://www.netlify.com/)
-- [AWS S3](https://aws.amazon.com/s3/)
-- 任何支持静态文件的 CDN
+### 3. 同步到服务器
+
+```bash
+rsync -avz --delete out/ aliyun:/var/www/html/
+```
+
+完成，无需重启任何服务。
+
+## 部署
+
+服务器使用 Nginx 托管静态文件，通过 SSH 别名 `aliyun` 连接（需在 `~/.ssh/config` 中配置免密登录）。
+
+```bash
+# 构建 + 同步一步完成
+npm run build && rsync -avz --delete out/ aliyun:/var/www/html/
+```
 
 ## 配置 Giscus 评论
 

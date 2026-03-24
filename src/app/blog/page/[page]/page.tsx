@@ -9,6 +9,8 @@ interface BlogPageProps {
   params: Promise<{ page: string }>
 }
 
+export const dynamicParams = false
+
 const POSTS_PER_PAGE = 9
 
 export async function generateMetadata({ params }: BlogPageProps): Promise<Metadata> {
@@ -24,6 +26,10 @@ export async function generateStaticParams() {
   const totalPages = Math.ceil(allPublishedPosts.length / POSTS_PER_PAGE)
 
   // 生成第 2 页及以后的静态参数（第 1 页是 /blog）
+  if (totalPages <= 1) {
+    // 文章数不足以分页时，返回一个永远 notFound 的占位符
+    return [{ page: "2" }]
+  }
   return Array.from({ length: totalPages - 1 }, (_, i) => ({
     page: String(i + 2),
   }))
